@@ -13,6 +13,7 @@ import (
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/client"
+	"github.com/docker/go-connections/nat"
 	"github.com/samber/lo"
 )
 
@@ -92,7 +93,7 @@ func RemoveContainer(ctx context.Context, id string) error {
 	}
 	defer cli.Close()
 
-	return cli.ContainerRemove(ctx, id, types.ContainerRemoveOptions{Force: true})
+	return cli.ContainerRemove(ctx, id, container.RemoveOptions{Force: true})
 }
 
 func RenameContainer(ctx context.Context, id string, name string) error {
@@ -118,7 +119,7 @@ func StartContainer(ctx context.Context, id string) error {
 	}
 
 	if !containerInfo.State.Running {
-		return cli.ContainerStart(ctx, id, types.ContainerStartOptions{})
+		return cli.ContainerStart(ctx, id, container.StartOptions{})
 	}
 
 	return nil
@@ -203,11 +204,23 @@ func runtimeConfig(containerInfo *types.ContainerJSON, imageInfo *types.ImageIns
 		return ok && v == v2
 	})
 
-	// subtract ports exposed in image from container
+	// subtract ports exposed in image from container.
+	// for k := range config.ExposedPorts {
+	// 	if _, ok := imageConfig.ExposedPorts[k]; ok {
+	// 		delete(config.ExposedPorts, k)
+	// 	}
+	// }
+
+	keysToDelete := []nat.Port{}
+
 	for k := range config.ExposedPorts {
-		if _, ok := imageConfig.ExposedPorts[k]; ok {
-			delete(config.ExposedPorts, k)
+		if _, ok := imageConfig.ExposedPorts[string(k)]; ok {
+			keysToDelete = append(keysToDelete, k)
 		}
+	}
+
+	for _, k := range keysToDelete {
+		delete(config.ExposedPorts, k)
 	}
 
 	for p := range containerInfo.HostConfig.PortBindings {

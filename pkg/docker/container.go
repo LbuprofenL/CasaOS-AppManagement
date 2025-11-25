@@ -12,6 +12,7 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/network"
+	"github.com/docker/docker/api/types/versions"
 	"github.com/docker/docker/client"
 	"github.com/docker/go-connections/nat"
 	"github.com/samber/lo"
@@ -63,6 +64,17 @@ func CloneContainer(ctx context.Context, id string, newName string) (string, err
 		return "", err
 	}
 	defer cli.Close()
+	for k, endpoint := range simpleNetworkConfig.EndpointsConfig {
+		endpoint.MacAddress = ""
+		simpleNetworkConfig.EndpointsConfig[k] = endpoint
+	}
+	ver, _ := cli.ServerVersion(ctx)
+	if versions.LessThan(ver.APIVersion, "1.44") {
+		for k, endpoint := range simpleNetworkConfig.EndpointsConfig {
+			endpoint.MacAddress = ""
+			simpleNetworkConfig.EndpointsConfig[k] = endpoint
+		}
+	}
 
 	newContainer, err := cli.ContainerCreate(ctx, config, hostConfig, simpleNetworkConfig, nil, newName)
 	if err != nil {

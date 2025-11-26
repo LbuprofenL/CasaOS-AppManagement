@@ -1,7 +1,6 @@
 package docker_test
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/IceWhaleTech/CasaOS-AppManagement/pkg/docker"
@@ -15,7 +14,6 @@ func TestCurrentArchitecture(t *testing.T) {
 	assert.NilError(t, err)
 	defer cli.Close()
 
-	fmt.Println(a, err)
 	assert.NilError(t, err)
 	assert.Assert(t, a != "")
 }
@@ -23,6 +21,5 @@ func TestCurrentArchitecture(t *testing.T) {
 func TestCurrentVersion(t *testing.T) {
 	v, err := docker.CurrentVersion()
 	assert.NilError(t, err)
-	fmt.Printf("Current Version: %s\n", v)
 	assert.Assert(t, v != "")
 }

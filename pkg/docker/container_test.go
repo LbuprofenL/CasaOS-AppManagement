@@ -80,9 +80,6 @@ func TestCloneContainer(t *testing.T) {
 		assert.NilError(t, err)
 	}()
 
-	ver, _ := cli.ServerVersion(ctx)
-	t.Logf("cli.Version: %s", ver.APIVersion)
-
 	newID, err := docker.CloneContainer(ctx, response.ID, "test-"+random.String(4, false))
 	assert.NilError(t, err)
 
